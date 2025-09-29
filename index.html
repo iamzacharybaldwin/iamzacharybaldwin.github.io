@@ -1,14 +1,51 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Referer Header Spoofer</title>
+    <title>Referer Header Helper</title>
+    <style>
+      code {
+        color: red;
+      }
+
+      * {
+        font-family: Arial, Helvetica, sans-serif;
+      }
+    </style>
   </head>
   <body>
-    <a href="https://localhost:44364/">Go to localhost:44364</a>
+    <h2>Info</h2>
+    <p>
+      The links on this page will take you to the stage you click on. This page
+      exists because I don't know if there are actually any pages that redirect
+      to Fairway directly (which is a requirement to ensure that the referer url
+      can be tracked properly). When you look in appinsights for the referer
+      url, it will be
+      <code>https://iamzacharybaldwin.github.io/</code>. In fact, if you see
+      something other than a <code>localhost</code> or a
+      <code>fairway.ethosgroup.com</code>
+      link, that means the referer header is being tracked as expected.
+    </p>
 
-    <script>
-      // let input = document.getElementById("referer");
-      // let button = document.getElementById("submit");
-    </script>
+    <h2>For developers:</h2>
+    <p>
+      <a href="https://localhost:44364/">Go to localhost:44364</a>
+    </p>
+
+    <br />
+
+    <h2>For QA:</h2>
+    <p>
+      <a href="https://fairway-dev.ethosgroup.com"
+        >Go to fairway-dev.ethosgroup.com</a
+      >
+    </p>
+    <p>
+      <a href="https://fairway-qa.ethosgroup.com"
+        >Go to fairway-qa.ethosgroup.com</a
+      >
+    </p>
+    <p>
+      <a href="https://fairway.ethosgroup.com">Go to fairway.ethosgroup.com</a>
+    </p>
   </body>
 </html>
