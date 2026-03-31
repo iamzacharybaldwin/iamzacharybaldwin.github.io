@@ -38,6 +38,28 @@
         min-width: 336px;
       }
 
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .panel-header h4 {
+        margin: 0;
+      }
+
+      .width-btn {
+        background-color: #6c757d;
+        font-size: 12px;
+        padding: 4px 10px;
+        margin: 0 0 0 6px;
+      }
+
+      .width-btn:hover {
+        background-color: #5a6268;
+      }
+
       .iframe-container {
         background: white;
         border-radius: 8px;
@@ -245,7 +267,10 @@
 
       <div class="right-panel" id="rightPanel">
         <div class="iframe-container">
-          <h4>Iframe Content</h4>
+          <div class="panel-header">
+            <h4>Iframe Content</h4>
+            <button class="width-btn" id="toggleWidthBtn" onclick="togglePanelWidth()">Switch to Desktop</button>
+          </div>
           <iframe
             id="testIframe"
             src=""
@@ -268,6 +293,22 @@
       const iframeInfo = document.getElementById("iframeInfo");
       const iframeStatus = document.getElementById("iframeStatus");
       const rightPanel = document.getElementById("rightPanel");
+      const toggleWidthBtn = document.getElementById("toggleWidthBtn");
+      let panelWidthState = "mobile";
+
+      function togglePanelWidth() {
+        if (panelWidthState === "mobile") {
+          rightPanel.style.width = "836px";
+          rightPanel.style.minWidth = "836px";
+          toggleWidthBtn.textContent = "Switch to Mobile";
+          panelWidthState = "desktop";
+        } else {
+          rightPanel.style.width = "336px";
+          rightPanel.style.minWidth = "336px";
+          toggleWidthBtn.textContent = "Switch to Desktop";
+          panelWidthState = "mobile";
+        }
+      }
       const testIframe = document.getElementById("testIframe");
 
       // Button references
