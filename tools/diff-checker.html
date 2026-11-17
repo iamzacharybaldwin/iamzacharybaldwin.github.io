@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diff Checker</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: #f3f2f1;
+    color: #201f1e;
+  }
+  h1 { font-size: 20px; margin: 0 0 12px; }
+  .inputs { display: flex; gap: 12px; }
+  .inputs .pane { flex: 1; display: flex; flex-direction: column; }
+  .inputs label { font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+  textarea {
+    height: 260px;
+    resize: vertical;
+    padding: 8px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    border: 1px solid #c8c6c4;
+    border-radius: 2px;
+    white-space: pre;
+    overflow: auto;
+  }
+  .actions { margin: 12px 0; display: flex; gap: 8px; align-items: center; }
+  button {
+    background: #0078d4;
+    color: #fff;
+    border: 0;
+    padding: 8px 18px;
+    font-size: 14px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  button:hover { background: #106ebe; }
+  button.secondary { background: #fff; color: #201f1e; border: 1px solid #8a8886; }
+  button.secondary:hover { background: #edebe9; }
+  #summary { font-size: 13px; color: #605e5c; }
+  #summary .add { color: #107c10; font-weight: 600; }
+  #summary .del { color: #a4262c; font-weight: 600; }
+
+  #result { display: none; border: 1px solid #c8c6c4; background: #fff; overflow: auto; }
+  .diff-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+  }
+  .diff-table td { vertical-align: top; padding: 0 6px; white-space: pre-wrap; word-break: break-all; line-height: 20px; }
+  .diff-table td.num {
+    width: 44px;
+    text-align: right;
+    color: #605e5c;
+    background: #faf9f8;
+    user-select: none;
+    border-right: 1px solid #e1dfdd;
+  }
+  .diff-table td.mid { width: 1px; padding: 0; background: #c8c6c4; }
+  .diff-table td.code { width: calc(50% - 45px); }
+
+  .del-line td.code.left, .del-line td.num.left { background: #ffd7d5; }
+  .add-line td.code.right, .add-line td.num.right { background: #ccffd8; }
+  .empty { background: #f3f2f1; }
+  .del-line td.num.left { background: #ffb3b0; }
+  .add-line td.num.right { background: #99e6ac; }
+  .del-line td.code.left .hl { background: #ff9892; }
+  .add-line td.code.right .hl { background: #7fe39a; }
+</style>
+</head>
+<body>
+  <h1>Diff Checker</h1>
+
+  <div class="inputs">
+    <div class="pane">
+      <label for="left">Original</label>
+      <textarea id="left" spellcheck="false"></textarea>
+    </div>
+    <div class="pane">
+      <label for="right">Modified</label>
+      <textarea id="right" spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button id="check">Check Diff</button>
+    <button id="clear" class="secondary">Clear</button>
+    <span id="summary"></span>
+  </div>
+
+  <div id="result"></div>
+
+<script>
+  const leftEl = document.getElementById("left");
+  const rightEl = document.getElementById("right");
+  const resultEl = document.getElementById("result");
+  const summaryEl = document.getElementById("summary");
+
+  function splitLines(text) {
+    if (text === "") {
+      return [];
+    }
+    return text.replace(/\r\n/g, "\n").split("\n");
+  }
+
+  // LCS-based line diff; returns ops of { type: "eq" | "del" | "add", text }.
+  function diffLines(a, b) {
+    let start = 0;
+    while (start < a.length && start < b.length && a[start] === b[start]) {
+      start++;
+    }
+    let endA = a.length;
+    let endB = b.length;
+    while (endA > start && endB > start && a[endA - 1] === b[endB - 1]) {
+      endA--;
+      endB--;
+    }
+
+    const midA = a.slice(start, endA);
+    const midB = b.slice(start, endB);
+    const n = midA.length;
+    const m = midB.length;
+    const w = m + 1;
+    const table = new Uint32Array((n + 1) * w);
+
+    for (let i = n - 1; i >= 0; i--) {
+      for (let j = m - 1; j >= 0; j--) {
+        if (midA[i] === midB[j]) {
+          table[i * w + j] = table[(i + 1) * w + j + 1] + 1;
+        } else {
+          table[i * w + j] = Math.max(table[(i + 1) * w + j], table[i * w + j + 1]);
+        }
+      }
+    }
+
+    const ops = [];
+    for (let i = 0; i < start; i++) {
+      ops.push({ type: "eq", text: a[i] });
+    }
+    let i = 0;
+    let j = 0;
+    while (i < n && j < m) {
+      if (midA[i] === midB[j]) {
+        ops.push({ type: "eq", text: midA[i] });
+        i++;
+        j++;
+      } else if (table[(i + 1) * w + j] >= table[i * w + j + 1]) {
+        ops.push({ type: "del", text: midA[i++] });
+      } else {
+        ops.push({ type: "add", text: midB[j++] });
+      }
+    }
+    while (i < n) {
+      ops.push({ type: "del", text: midA[i++] });
+    }
+    while (j < m) {
+      ops.push({ type: "add", text: midB[j++] });
+    }
+    for (let k = endA; k < a.length; k++) {
+      ops.push({ type: "eq", text: a[k] });
+    }
+    return ops;
+  }
+
+  // Pairs each run of deletions with the following run of additions into side-by-side rows.
+  function buildRows(ops) {
+    const rows = [];
+    let leftNo = 1;
+    let rightNo = 1;
+    let i = 0;
+    while (i < ops.length) {
+      if (ops[i].type === "eq") {
+        rows.push({ l: { no: leftNo++, text: ops[i].text }, r: { no: rightNo++, text: ops[i].text }, kind: "eq" });
+        i++;
+        continue;
+      }
+      const dels = [];
+      const adds = [];
+      while (i < ops.length && ops[i].type === "del") {
+        dels.push(ops[i++].text);
+      }
+      while (i < ops.length && ops[i].type === "add") {
+        adds.push(ops[i++].text);
+      }
+      const count = Math.max(dels.length, adds.length);
+      for (let k = 0; k < count; k++) {
+        const row = { kind: "chg", l: null, r: null };
+        if (k < dels.length) {
+          row.l = { no: leftNo++, text: dels[k] };
+        }
+        if (k < adds.length) {
+          row.r = { no: rightNo++, text: adds[k] };
+        }
+        if (row.l && row.r) {
+          const [lh, rh] = highlightWords(row.l.text, row.r.text);
+          row.l.html = lh;
+          row.r.html = rh;
+        }
+        rows.push(row);
+      }
+    }
+    return rows;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // Trims the common prefix/suffix and highlights the differing middle of a changed line pair.
+  function highlightWords(a, b) {
+    let s = 0;
+    while (s < a.length && s < b.length && a[s] === b[s]) {
+      s++;
+    }
+    let ea = a.length;
+    let eb = b.length;
+    while (ea > s && eb > s && a[ea - 1] === b[eb - 1]) {
+      ea--;
+      eb--;
+    }
+    const wrap = (str, from, to) => {
+      const mid = str.slice(from, to);
+      return escapeHtml(str.slice(0, from)) +
+        (mid ? '<span class="hl">' + escapeHtml(mid) + "</span>" : "") +
+        escapeHtml(str.slice(to));
+    };
+    return [wrap(a, s, ea), wrap(b, s, eb)];
+  }
+
+  function cell(side, data, cls) {
+    if (!data) {
+      return '<td class="num ' + cls + ' empty"></td><td class="code ' + cls + ' empty"></td>';
+    }
+    const html = data.html !== undefined ? data.html : escapeHtml(data.text);
+    return '<td class="num ' + cls + '">' + data.no + '</td><td class="code ' + cls + '">' + html + "</td>";
+  }
+
+  function render() {
+    const ops = diffLines(splitLines(leftEl.value), splitLines(rightEl.value));
+    const rows = buildRows(ops);
+
+    let added = 0;
+    let removed = 0;
+    let html = '<table class="diff-table"><colgroup><col style="width:44px"><col><col style="width:1px"><col style="width:44px"><col></colgroup>';
+    for (const row of rows) {
+      let trClass = "";
+      if (row.kind === "chg") {
+        const parts = [];
+        if (row.l) {
+          parts.push("del-line");
+          removed++;
+        }
+        if (row.r) {
+          parts.push("add-line");
+          added++;
+        }
+        trClass = parts.join(" ");
+      }
+      html += '<tr class="' + trClass + '">' +
+        cell("l", row.l, "left") +
+        '<td class="mid"></td>' +
+        cell("r", row.r, "right") +
+        "</tr>";
+    }
+    html += "</table>";
+
+    resultEl.innerHTML = html;
+    resultEl.style.display = "block";
+
+    if (added === 0 && removed === 0) {
+      summaryEl.textContent = "No differences.";
+    } else {
+      summaryEl.innerHTML = '<span class="add">+' + added + '</span> / <span class="del">-' + removed + "</span> lines changed";
+    }
+  }
+
+  document.getElementById("check").addEventListener("click", render);
+  document.getElementById("clear").addEventListener("click", () => {
+    leftEl.value = "";
+    rightEl.value = "";
+    resultEl.style.display = "none";
+    resultEl.innerHTML = "";
+    summaryEl.textContent = "";
+  });
+</script>
+</body>
+</html>

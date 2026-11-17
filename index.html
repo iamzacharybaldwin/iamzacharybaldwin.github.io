@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>iamzacharybaldwin.github.io</title>
+    <title>🦝</title>
     <style>
       body {
         display: flex;
@@ -16,9 +16,164 @@
         height: 100vh;
         object-fit: cover;
       }
+
+      .tool-frame {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        border: 0;
+        background: #fff;
+        z-index: 1;
+      }
+
+      .tool-frame[hidden] {
+        display: none;
+      }
+
+      .tools-toggle {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 20;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+      }
+
+      .tools-toggle:hover,
+      body:has(.tools-panel:hover) .tools-toggle {
+        opacity: 0;
+      }
+
+      body:has(.tools-panel:hover) .tools-toggle {
+        pointer-events: none;
+      }
+
+      .tools-toggle svg {
+        width: 22px;
+        height: 22px;
+        stroke: #222;
+        fill: none;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .tools-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: 260px;
+        box-sizing: border-box;
+        padding: 76px 24px 24px;
+        background: #fff;
+        box-shadow: -2px 0 12px rgba(0, 0, 0, 0.35);
+        font-family: sans-serif;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        z-index: 10;
+      }
+
+      .tools-toggle:hover + .tools-panel,
+      .tools-panel:hover {
+        transform: translateX(0);
+      }
+
+      .tools-panel h2 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #666;
+      }
+
+      .tools-panel a {
+        display: block;
+        padding: 10px 0;
+        color: #222;
+        text-decoration: none;
+        border-bottom: 1px solid #eee;
+      }
+
+      .tools-panel a:hover {
+        color: #0366d6;
+      }
+
+      .tools-panel a[hidden] {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <img src="assets/raccoon-stance.gif">
+    <iframe class="tool-frame" id="tool-frame" hidden></iframe>
+    <div class="tools-toggle">
+      <svg viewBox="0 0 24 24">
+        <polyline points="11 17 6 12 11 7" />
+        <polyline points="18 17 13 12 18 7" />
+      </svg>
+    </div>
+    <div class="tools-panel">
+      <h2>Tools</h2>
+      <a href="tools/diff-checker.html">Diff Checker</a>
+      <a href="tools/lot-scanner.html">Lot Scanner</a>
+      <a href="tools/referrer-tool.html">Referrer Tool</a>
+      <a href="./" id="home-link" hidden>🦝</a>
+    </div>
+    <script>
+      const frame = document.getElementById("tool-frame");
+      const homeLink = document.getElementById("home-link");
+      const links = document.querySelectorAll(".tools-panel a[href^='tools/']");
+
+      function toolName(link)
+      {
+        return link.getAttribute("href").replace(/^tools\//, "").replace(/\.html$/, "");
+      }
+
+      // Only names matching a panel link are loaded, so the query string can't point the frame elsewhere.
+      function showTool(name)
+      {
+        const link = [...links].find(l => toolName(l) === name);
+
+        frame.hidden = !link;
+        homeLink.hidden = !link;
+        frame.src = link ? link.href : "about:blank";
+      }
+
+      for (const link of links)
+      {
+        link.addEventListener("click", event =>
+        {
+          event.preventDefault();
+
+          const name = toolName(link);
+          history.pushState(null, "", "?tool=" + encodeURIComponent(name));
+          showTool(name);
+        });
+      }
+
+      homeLink.addEventListener("click", event =>
+      {
+        event.preventDefault();
+        history.pushState(null, "", location.pathname);
+        showTool(null);
+      });
+
+      window.addEventListener("popstate", () =>
+      {
+        showTool(new URLSearchParams(location.search).get("tool"));
+      });
+
+      showTool(new URLSearchParams(location.search).get("tool"));
+    </script>
   </body>
 </html>
