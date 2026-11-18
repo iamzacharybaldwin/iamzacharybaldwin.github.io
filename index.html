@@ -11,10 +11,219 @@
 
       }
 
-      img {
+      .raccoon {
         width: 100vw;
         height: 100vh;
-        object-fit: cover;
+        background: url(assets/raccoon-stance.gif) center / cover no-repeat;
+      }
+
+      .raccoon {
+        user-select: none;
+        touch-action: none;
+      }
+
+      .selection-box {
+        position: fixed;
+        box-sizing: border-box;
+        border: 1px solid #4da3ff;
+        background: rgba(77, 163, 255, 0.25);
+        pointer-events: none;
+      }
+
+      .context-menu {
+        position: fixed;
+        z-index: 30;
+        min-width: 160px;
+        padding: 4px 0;
+        background: #fff;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+        font-family: sans-serif;
+        font-size: 14px;
+      }
+
+      .context-menu[hidden] {
+        display: none;
+      }
+
+      .context-menu button {
+        display: block;
+        width: 100%;
+        padding: 8px 14px;
+        border: 0;
+        background: none;
+        text-align: left;
+        font: inherit;
+        color: #222;
+        cursor: pointer;
+      }
+
+      .context-menu button:hover {
+        background: #eee;
+      }
+
+      .context-menu button[hidden] {
+        display: none;
+      }
+
+      .file {
+        position: fixed;
+        box-sizing: border-box;
+        width: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 4px;
+        border-radius: 4px;
+        user-select: none;
+        touch-action: none;
+        cursor: default;
+      }
+
+      .file:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      .file.selected {
+        background: rgba(77, 163, 255, 0.35);
+        outline: 1px solid rgba(77, 163, 255, 0.8);
+      }
+
+      body:has(.tool-frame:not([hidden])) .file {
+        display: none;
+      }
+
+      .file svg {
+        width: 44px;
+        height: 44px;
+        stroke: #444;
+        stroke-width: 1.5;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+      }
+
+      .file-label {
+        max-width: 100%;
+        font: 12px sans-serif;
+        color: #fff;
+        text-align: center;
+        text-shadow: 0 1px 3px #000, 0 0 2px #000;
+        overflow-wrap: anywhere;
+      }
+
+      .file-rename {
+        box-sizing: border-box;
+        width: 100%;
+        font: 12px sans-serif;
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.4);
+      }
+
+      .modal-backdrop[hidden] {
+        display: none;
+      }
+
+      .modal {
+        width: min(560px, 92vw);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #f0f0f0;
+        border-radius: 6px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        font-family: sans-serif;
+      }
+
+      .modal-title {
+        padding: 8px 12px;
+        background: #2b2b2b;
+        color: #fff;
+        font-size: 13px;
+      }
+
+      .modal-name,
+      .modal-text {
+        box-sizing: border-box;
+        width: calc(100% - 20px);
+        margin: 10px 10px 0;
+        padding: 6px 8px;
+        border: 1px solid #bbb;
+        background: #fff;
+      }
+
+      .modal-name {
+        font: 14px sans-serif;
+      }
+
+      .modal-text {
+        height: 320px;
+        resize: none;
+        font: 14px/1.4 Consolas, monospace;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 10px;
+      }
+
+      .modal-actions button {
+        padding: 6px 16px;
+        border: 1px solid #999;
+        border-radius: 4px;
+        background: #fff;
+        font: 14px sans-serif;
+        cursor: pointer;
+      }
+
+      .modal-actions .modal-save {
+        border-color: #0366d6;
+        background: #0366d6;
+        color: #fff;
+      }
+
+      .modal-actions .wallpaper-reset {
+        margin-right: auto;
+      }
+
+      .wallpaper-body {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 10px 4px;
+      }
+
+      .wallpaper-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+
+      .wallpaper-url {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid #bbb;
+        font: 14px sans-serif;
+      }
+
+      .wallpaper-error {
+        color: #c00;
+        font-size: 13px;
+      }
+
+      .wallpaper-error[hidden] {
+        display: none;
       }
 
       .tool-frame {
@@ -114,7 +323,47 @@
     </style>
   </head>
   <body>
-    <img src="assets/raccoon-stance.gif">
+    <div class="raccoon"></div>
+    <div class="context-menu" hidden>
+      <button type="button" class="new-file">New file</button>
+      <button type="button" class="set-wallpaper">Set wallpaper</button>
+      <button type="button" class="rename-file" hidden>Rename</button>
+      <button type="button" class="delete-files" hidden>Delete</button>
+    </div>
+    <div class="modal-backdrop editor-modal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Text editor">
+        <div class="modal-title">Text Editor</div>
+        <input type="text" class="modal-name" placeholder="filename.txt" maxlength="100">
+        <textarea class="modal-text" spellcheck="false"></textarea>
+        <div class="modal-actions">
+          <button type="button" class="modal-cancel">Cancel</button>
+          <button type="button" class="modal-save">Save</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop" id="wallpaper-modal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Set wallpaper">
+        <div class="modal-title">Wallpaper</div>
+        <div class="wallpaper-body">
+          <label class="wallpaper-option">
+            <input type="radio" name="wallpaper-type" value="color" checked>
+            Solid color
+            <input type="color" class="wallpaper-color" value="#222222">
+          </label>
+          <label class="wallpaper-option">
+            <input type="radio" name="wallpaper-type" value="image">
+            Image URL
+            <input type="url" class="wallpaper-url" placeholder="https://example.com/image.jpg">
+          </label>
+          <div class="wallpaper-error" hidden></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="wallpaper-reset">Reset</button>
+          <button type="button" class="wallpaper-cancel">Cancel</button>
+          <button type="button" class="modal-save wallpaper-apply">Apply</button>
+        </div>
+      </div>
+    </div>
     <iframe class="tool-frame" id="tool-frame" hidden></iframe>
     <div class="tools-toggle">
       <svg viewBox="0 0 24 24">
@@ -174,6 +423,628 @@
       });
 
       showTool(new URLSearchParams(location.search).get("tool"));
+
+      const raccoon = document.querySelector(".raccoon");
+      const dragThreshold = 3;
+      const selection = new Set();
+
+      function getFile(el)
+      {
+        return files.find(f => f.id === Number(el.dataset.id));
+      }
+
+      function setSelected(file, on)
+      {
+        if (on)
+        {
+          selection.add(file);
+        }
+        else
+        {
+          selection.delete(file);
+        }
+
+        fileEls.get(file).classList.toggle("selected", on);
+      }
+
+      function clearSelection()
+      {
+        for (const file of [...selection])
+        {
+          setSelected(file, false);
+        }
+      }
+
+      function selectOnly(file)
+      {
+        clearSelection();
+        setSelected(file, true);
+      }
+
+      function isAdditive(event)
+      {
+        return event.ctrlKey || event.metaKey || event.shiftKey;
+      }
+
+      function startMarquee(event)
+      {
+        const additive = isAdditive(event);
+        const base = additive ? new Set(selection) : new Set();
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const box = document.createElement("div");
+
+        box.className = "selection-box";
+        box.hidden = true;
+        document.body.appendChild(box);
+
+        if (!additive)
+        {
+          clearSelection();
+        }
+
+        raccoon.setPointerCapture(event.pointerId);
+
+        const onMove = e =>
+        {
+          const left = Math.min(startX, e.clientX);
+          const top = Math.min(startY, e.clientY);
+          const right = Math.max(startX, e.clientX);
+          const bottom = Math.max(startY, e.clientY);
+
+          box.hidden = false;
+          box.style.left = left + "px";
+          box.style.top = top + "px";
+          box.style.width = right - left + "px";
+          box.style.height = bottom - top + "px";
+
+          for (const [file, el] of fileEls)
+          {
+            const r = el.getBoundingClientRect();
+            const hit = r.left < right && r.right > left && r.top < bottom && r.bottom > top;
+
+            setSelected(file, base.has(file) || hit);
+          }
+        };
+
+        const onUp = () =>
+        {
+          raccoon.removeEventListener("pointermove", onMove);
+          raccoon.removeEventListener("pointerup", onUp);
+          raccoon.removeEventListener("pointercancel", onUp);
+          box.remove();
+        };
+
+        raccoon.addEventListener("pointermove", onMove);
+        raccoon.addEventListener("pointerup", onUp);
+        raccoon.addEventListener("pointercancel", onUp);
+      }
+
+      function startFileDrag(event, el)
+      {
+        const file = getFile(el);
+        const additive = isAdditive(event);
+
+        if (additive)
+        {
+          setSelected(file, !selection.has(file));
+
+          if (!selection.has(file))
+          {
+            return;
+          }
+        }
+        else if (!selection.has(file))
+        {
+          selectOnly(file);
+        }
+
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const starts = [...selection].map(f =>
+        {
+          const fileEl = fileEls.get(f);
+
+          return { file: f, el: fileEl, left: fileEl.offsetLeft, top: fileEl.offsetTop };
+        });
+        const minLeft = Math.min(...starts.map(s => s.left));
+        const minTop = Math.min(...starts.map(s => s.top));
+        const maxRight = Math.max(...starts.map(s => s.left + s.el.offsetWidth));
+        const maxBottom = Math.max(...starts.map(s => s.top + s.el.offsetHeight));
+        let moved = false;
+
+        el.setPointerCapture(event.pointerId);
+
+        const onMove = e =>
+        {
+          if (!moved && Math.hypot(e.clientX - startX, e.clientY - startY) < dragThreshold)
+          {
+            return;
+          }
+
+          moved = true;
+
+          const dx = Math.max(-minLeft, Math.min(e.clientX - startX, innerWidth - maxRight));
+          const dy = Math.max(-minTop, Math.min(e.clientY - startY, innerHeight - maxBottom));
+
+          for (const s of starts)
+          {
+            s.el.style.left = s.left + dx + "px";
+            s.el.style.top = s.top + dy + "px";
+          }
+        };
+
+        const onUp = () =>
+        {
+          el.removeEventListener("pointermove", onMove);
+          el.removeEventListener("pointerup", onUp);
+          el.removeEventListener("pointercancel", onUp);
+
+          if (moved)
+          {
+            for (const s of starts)
+            {
+              s.file.x = s.el.offsetLeft;
+              s.file.y = s.el.offsetTop;
+            }
+
+            saveFiles();
+          }
+          else if (!additive)
+          {
+            selectOnly(file);
+          }
+        };
+
+        el.addEventListener("pointermove", onMove);
+        el.addEventListener("pointerup", onUp);
+        el.addEventListener("pointercancel", onUp);
+      }
+
+      function deleteSelected()
+      {
+        for (const file of [...selection])
+        {
+          fileEls.get(file).remove();
+          fileEls.delete(file);
+          files.splice(files.indexOf(file), 1);
+          selection.delete(file);
+        }
+
+        saveFiles();
+      }
+
+      document.addEventListener("pointerdown", event =>
+      {
+        if (event.button !== 0)
+        {
+          return;
+        }
+
+        const fileEl = event.target.closest(".file");
+
+        if (fileEl && !event.target.closest("input"))
+        {
+          startFileDrag(event, fileEl);
+          return;
+        }
+
+        if (event.target === raccoon)
+        {
+          startMarquee(event);
+        }
+      });
+
+      document.addEventListener("keydown", event =>
+      {
+        const busy = event.target.closest("input, textarea") || !modal.hidden || !wallpaperModal.hidden;
+
+        if (event.key === "Delete" && selection.size > 0 && !busy)
+        {
+          deleteSelected();
+        }
+      });
+
+      const menu = document.querySelector(".context-menu");
+      const newFileItem = menu.querySelector(".new-file");
+      const deleteItem = menu.querySelector(".delete-files");
+      const renameItem = menu.querySelector(".rename-file");
+      const wallpaperItem = menu.querySelector(".set-wallpaper");
+      const modal = document.querySelector(".editor-modal");
+      const nameInput = modal.querySelector(".modal-name");
+      const textInput = modal.querySelector(".modal-text");
+      const filesKey = "files";
+      const wallpaperKey = "wallpaper";
+      const wallpaperModal = document.getElementById("wallpaper-modal");
+      const wallpaperColor = wallpaperModal.querySelector(".wallpaper-color");
+      const wallpaperUrl = wallpaperModal.querySelector(".wallpaper-url");
+      const wallpaperError = wallpaperModal.querySelector(".wallpaper-error");
+      let wallpaper = null;
+      const fileWidth = 80;
+      const fileHeight = 90;
+      const fileIcon = `<svg viewBox="0 0 24 24"><path d="M6 2h8l5 5v15H6z" fill="#fff"/><path d="M14 2v5h5M9 12h7M9 15h7M9 18h5" fill="none"/></svg>`;
+      const files = [];
+      const fileEls = new Map();
+      let menuPoint = { x: 0, y: 0 };
+      let editing = null;
+      let editPoint = null;
+
+      document.addEventListener("contextmenu", event =>
+      {
+        if (event.target.closest(".modal, .file-rename"))
+        {
+          return;
+        }
+
+        event.preventDefault();
+
+        const fileEl = event.target.closest(".file");
+
+        if (!fileEl)
+        {
+          clearSelection();
+        }
+        else if (!selection.has(getFile(fileEl)))
+        {
+          selectOnly(getFile(fileEl));
+        }
+
+        menuPoint = { x: event.clientX, y: event.clientY };
+        newFileItem.hidden = wallpaperItem.hidden = fileEl !== null;
+        deleteItem.hidden = fileEl === null;
+        deleteItem.textContent = selection.size > 1 ? `Delete ${selection.size} files` : "Delete";
+        renameItem.hidden = fileEl === null || selection.size !== 1;
+
+        menu.hidden = false;
+        menu.style.left = Math.min(event.clientX, innerWidth - menu.offsetWidth) + "px";
+        menu.style.top = Math.min(event.clientY, innerHeight - menu.offsetHeight) + "px";
+      });
+
+      document.addEventListener("pointerdown", event =>
+      {
+        if (!event.target.closest(".context-menu"))
+        {
+          menu.hidden = true;
+        }
+      });
+
+      document.addEventListener("keydown", event =>
+      {
+        if (event.key === "Escape")
+        {
+          menu.hidden = true;
+        }
+      });
+
+      window.addEventListener("blur", () =>
+      {
+        menu.hidden = true;
+      });
+
+      deleteItem.addEventListener("click", () =>
+      {
+        menu.hidden = true;
+        deleteSelected();
+      });
+
+      newFileItem.addEventListener("click", () =>
+      {
+        menu.hidden = true;
+        openEditor(null, menuPoint);
+      });
+
+      renameItem.addEventListener("click", () =>
+      {
+        menu.hidden = true;
+        startRename([...selection][0]);
+      });
+
+      modal.querySelector(".modal-save").addEventListener("click", saveEditor);
+      modal.querySelector(".modal-cancel").addEventListener("click", closeEditor);
+
+      document.addEventListener("keydown", event =>
+      {
+        if (event.key === "Escape" && !modal.hidden)
+        {
+          closeEditor();
+        }
+      });
+
+      function saveFiles()
+      {
+        localStorage.setItem(filesKey, JSON.stringify(files));
+      }
+
+      function renderFile(file)
+      {
+        const el = document.createElement("div");
+        el.className = "file";
+        el.dataset.id = file.id;
+        el.style.left = file.x + "px";
+        el.style.top = file.y + "px";
+        el.innerHTML = fileIcon;
+
+        const label = document.createElement("span");
+        label.className = "file-label";
+        label.textContent = file.name;
+        el.appendChild(label);
+
+        el.addEventListener("dblclick", event =>
+        {
+          if (!event.target.closest("input"))
+          {
+            openEditor(file, null);
+          }
+        });
+
+        document.body.appendChild(el);
+        fileEls.set(file, el);
+      }
+
+      function openEditor(file, point)
+      {
+        editing = file;
+        editPoint = point;
+        nameInput.value = file ? file.name : "untitled.txt";
+        textInput.value = file ? file.content : "";
+        modal.hidden = false;
+        textInput.focus();
+      }
+
+      function closeEditor()
+      {
+        modal.hidden = true;
+        editing = null;
+        editPoint = null;
+      }
+
+      function saveEditor()
+      {
+        const name = nameInput.value.trim() || "untitled.txt";
+
+        if (editing)
+        {
+          editing.name = name;
+          editing.content = textInput.value;
+          fileEls.get(editing).querySelector(".file-label").textContent = name;
+        }
+        else
+        {
+          const file =
+          {
+            id: files.reduce((max, f) => Math.max(max, f.id), 0) + 1,
+            name,
+            content: textInput.value,
+            x: Math.max(0, Math.min(editPoint.x, innerWidth - fileWidth)),
+            y: Math.max(0, Math.min(editPoint.y, innerHeight - fileHeight))
+          };
+
+          files.push(file);
+          renderFile(file);
+        }
+
+        saveFiles();
+        closeEditor();
+      }
+
+      function startRename(file)
+      {
+        const label = fileEls.get(file).querySelector(".file-label");
+        const input = document.createElement("input");
+        let done = false;
+
+        input.className = "file-rename";
+        input.value = file.name;
+        label.replaceWith(input);
+        input.focus();
+        input.setSelectionRange(0, file.name.lastIndexOf(".") > 0 ? file.name.lastIndexOf(".") : file.name.length);
+
+        const finish = commit =>
+        {
+          if (done)
+          {
+            return;
+          }
+
+          done = true;
+
+          const name = input.value.trim();
+
+          if (commit && name)
+          {
+            file.name = name;
+            saveFiles();
+          }
+
+          label.textContent = file.name;
+          input.replaceWith(label);
+        };
+
+        input.addEventListener("keydown", event =>
+        {
+          if (event.key === "Enter")
+          {
+            finish(true);
+          }
+          else if (event.key === "Escape")
+          {
+            finish(false);
+          }
+        });
+
+        input.addEventListener("blur", () => finish(true));
+      }
+
+      function loadFiles()
+      {
+        let data;
+
+        try
+        {
+          data = JSON.parse(localStorage.getItem(filesKey));
+        }
+        catch
+        {
+          return;
+        }
+
+        if (!Array.isArray(data))
+        {
+          return;
+        }
+
+        for (const file of data)
+        {
+          files.push(file);
+          renderFile(file);
+        }
+      }
+
+      function parseImageUrl(text)
+      {
+        try
+        {
+          const url = new URL(text.trim());
+
+          return url.protocol === "http:" || url.protocol === "https:" ? url.href : null;
+        }
+        catch
+        {
+          return null;
+        }
+      }
+
+      function applyWallpaper(wallpaper)
+      {
+        if (wallpaper?.type === "color")
+        {
+          raccoon.style.background = wallpaper.value;
+        }
+        else if (wallpaper?.type === "image")
+        {
+          raccoon.style.background = `url(${JSON.stringify(wallpaper.value)}) center / cover no-repeat`;
+        }
+        else
+        {
+          raccoon.style.background = "";
+        }
+      }
+
+      function setWallpaper(wallpaper)
+      {
+        if (wallpaper)
+        {
+          localStorage.setItem(wallpaperKey, JSON.stringify(wallpaper));
+        }
+        else
+        {
+          localStorage.removeItem(wallpaperKey);
+        }
+
+        applyWallpaper(wallpaper);
+        closeWallpaper();
+      }
+
+      function showWallpaperError(message)
+      {
+        wallpaperError.textContent = message;
+        wallpaperError.hidden = false;
+      }
+
+      function openWallpaper()
+      {
+        const isImage = wallpaper?.type === "image";
+
+        wallpaperColor.value = wallpaper?.type === "color" ? wallpaper.value : "#222222";
+        wallpaperUrl.value = isImage ? wallpaper.value : "";
+        wallpaperModal.querySelector(`input[name='wallpaper-type'][value='${isImage ? "image" : "color"}']`).checked = true;
+        wallpaperError.hidden = true;
+        wallpaperModal.hidden = false;
+      }
+
+      function closeWallpaper()
+      {
+        wallpaperModal.hidden = true;
+      }
+
+      function loadWallpaper()
+      {
+        try
+        {
+          const data = JSON.parse(localStorage.getItem(wallpaperKey));
+          const validColor = data?.type === "color" && /^#[0-9a-f]{6}$/i.test(data.value);
+          const validImage = data?.type === "image" && parseImageUrl(String(data.value)) !== null;
+
+          if (validColor || validImage)
+          {
+            wallpaper = data;
+            applyWallpaper(wallpaper);
+          }
+        }
+        catch
+        {
+          // Corrupt stored value; keep the default wallpaper.
+        }
+      }
+
+      wallpaperItem.addEventListener("click", () =>
+      {
+        menu.hidden = true;
+        openWallpaper();
+      });
+
+      wallpaperColor.addEventListener("input", () =>
+      {
+        wallpaperModal.querySelector("input[value='color']").checked = true;
+      });
+
+      wallpaperUrl.addEventListener("input", () =>
+      {
+        wallpaperModal.querySelector("input[value='image']").checked = true;
+      });
+
+      wallpaperModal.querySelector(".wallpaper-cancel").addEventListener("click", closeWallpaper);
+      wallpaperModal.querySelector(".wallpaper-reset").addEventListener("click", () => setWallpaper(null));
+
+      wallpaperModal.querySelector(".wallpaper-apply").addEventListener("click", () =>
+      {
+        if (wallpaperModal.querySelector("input[name='wallpaper-type']:checked").value === "color")
+        {
+          wallpaper = { type: "color", value: wallpaperColor.value };
+          setWallpaper(wallpaper);
+          return;
+        }
+
+        const href = parseImageUrl(wallpaperUrl.value);
+
+        if (!href)
+        {
+          showWallpaperError("Enter a valid http(s) image URL.");
+          return;
+        }
+
+        const probe = new Image();
+
+        probe.onload = () =>
+        {
+          wallpaper = { type: "image", value: href };
+          setWallpaper(wallpaper);
+        };
+
+        probe.onerror = () => showWallpaperError("The image could not be loaded.");
+        probe.src = href;
+      });
+
+      document.addEventListener("keydown", event =>
+      {
+        if (event.key === "Escape" && !wallpaperModal.hidden)
+        {
+          closeWallpaper();
+        }
+      });
+
+      loadWallpaper();
+      loadFiles();
     </script>
   </body>
 </html>
